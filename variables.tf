@@ -14,29 +14,22 @@ EOT
     server_id        = string
     start_ip_address = string
   }))
-  # --- Unconfirmed validation candidates, derived from azurerm_postgresql_flexible_server_firewall_rule's provider source ---
-  # Not auto-enabled: either a bespoke provider validator we can't safely translate,
-  # or a path that crosses a list-typed block (needs its own for_each wrapping).
-  # Review, translate into a real validation{} block above, and delete once confirmed.
-  # path: name
-  #   source:    [from validate.FlexibleServerFirewallRuleName] !ok
-  # path: name
-  #   condition: length(value) >= 1
-  #   message:   [from validate.FlexibleServerFirewallRuleName: invalid when len(value) < 1]
-  #   source:    [from validate.FlexibleServerFirewallRuleName: invalid when len(value) < 1]
-  # path: name
-  #   condition: length(value) <= 128
-  #   message:   [from validate.FlexibleServerFirewallRuleName: invalid when len(value) > 128]
-  #   source:    [from validate.FlexibleServerFirewallRuleName: invalid when len(value) > 128]
-  # path: name
-  #   source:    [from validate.FlexibleServerFirewallRuleName] !regexp.MustCompile(`^[a-zA-Z0-9-_]+$`).MatchString(v)
-  # path: server_id
-  #   source:    [from firewallrules.ValidateFlexibleServerID] !ok
-  # path: server_id
-  #   source:    [from firewallrules.ValidateFlexibleServerID] err != nil
-  # path: end_ip_address
-  #   source:    validation.IsIPv4Address(...) - no translation rule yet, add one
-  # path: start_ip_address
-  #   source:    validation.IsIPv4Address(...) - no translation rule yet, add one
+  validation {
+    condition = alltrue([
+      for k, v in var.postgresql_flexible_server_firewall_rules : (
+        length(v.name) >= 1
+      )
+    ])
+    error_message = "[from validate.FlexibleServerFirewallRuleName: invalid when len(value) < 1]"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.postgresql_flexible_server_firewall_rules : (
+        length(v.name) <= 128
+      )
+    ])
+    error_message = "[from validate.FlexibleServerFirewallRuleName: invalid when len(value) > 128]"
+  }
+  # Note: 6 additional provider-side validators are enforced at apply time but not mirrored as validation{} blocks here (bespoke or non-mechanically-translatable).
 }
 
